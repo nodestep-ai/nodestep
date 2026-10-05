@@ -1,0 +1,4 @@
+{% macro badge(status) %}
+{% set kind = {"running": "running", "completed": "completed", "interrupted": "paused", "error": "failed"}[status] %}
+<span class="nodestep-badge nodestep-badge-{{ kind }}">{{ kind|capitalize }}</span>
+{%- endmacro %}

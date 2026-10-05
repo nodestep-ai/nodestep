@@ -1,0 +1,18 @@
+{%- import "reference.html.jinja" as reference with context -%}
+{%- with html_id = class.path, hook = AutorefsHook(class, config) -%}
+  {%- set init = class.members["__init__"] if "__init__" in class.members else none -%}
+  <div class="doc doc-object doc-class ref-entry" data-ref-id="{{ html_id }}" data-ref-name="{{ class.name }}">
+    {{ reference.entry_heading(class, "class", "class", heading_level, html_id) }}
+    <div class="doc doc-contents ref-entry-body">
+      {%- if init and init.parameters|rejectattr("name", "in", ("self", "cls"))|list -%}
+        {{ reference.signature_line(init, class.name, false) }}
+      {%- endif -%}
+      {{ reference.docstring(class, init, heading_level, html_id, hook, skip=("attributes",), after_summary=reference.bases(class)) }}
+      {%- if init and init.docstring -%}
+        {{ reference.docstring(init, init, heading_level, html_id, hook) }}
+      {%- endif -%}
+      {{ reference.attribute_table(class, heading_level, html_id, hook) }}
+      {{ reference.method_list(class, heading_level + 1, html_id) }}
+    </div>
+  </div>
+{%- endwith -%}

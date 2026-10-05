@@ -1,0 +1,22 @@
+[
+  {
+    "media": "(prefers-color-scheme: light)",
+    "scheme": "default",
+    "primary": "custom",
+    "accent": "custom",
+    "toggle": {
+      "icon": "nodestep/moon",
+      "name": "Switch to dark theme"
+    }
+  },
+  {
+    "media": "(prefers-color-scheme: dark)",
+    "scheme": "slate",
+    "primary": "custom",
+    "accent": "custom",
+    "toggle": {
+      "icon": "nodestep/sun",
+      "name": "Switch to light theme"
+    }
+  }
+]

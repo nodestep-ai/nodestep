@@ -1,0 +1,10 @@
+{% set repository = page.meta.repository if page and page.meta.repository else config.repo_name %}
+<a href="{{ config.repo_url | replace(config.repo_name, repository) }}" title="{{ lang.t('source') }}" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    {% set icon = config.theme.icon.repo or "fontawesome/brands/git-alt" %}
+    {% include ".icons/" ~ icon ~ ".svg" %}
+  </div>
+  <div class="md-source__repository">
+    {{ repository }}
+  </div>
+</a>

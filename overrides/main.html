@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block htmltitle %}
+  {% set project = page.ancestors | last if page and page.ancestors %}
+  {% set docs = (project.title if project and project is not sameas nav.items[0] else config.site_name) ~ " docs" %}
+  {% if page and page.file.src_uri == "index.md" %}
+    <title>{{ docs }}</title>
+  {% else %}
+    <title>{{ page.title | striptags if page else "Not found" }} · {{ docs }}</title>
+  {% endif %}
+{% endblock %}
+{% block extrahead %}
+  <script>
+    (() => {
+      const key = "nodestep-theme";
+      const schemes = { light: "default", dark: "slate" };
+      const palettes = {{ config.theme.palette | tojson }};
+      const repository = {{ (page.meta.repository if page and page.meta.repository else config.repo_name) | tojson }};
+      const materialGet = __md_get;
+      const materialSet = __md_set;
+      const storedTheme = () => {
+        try {
+          const theme = localStorage.getItem(key);
+          return theme === "light" || theme === "dark" ? theme : null;
+        } catch {
+          return null;
+        }
+      };
+      if (storedTheme() === null) {
+        try {
+          const scheme = materialGet("__palette")?.color?.scheme;
+          const theme = Object.keys(schemes).find((name) => schemes[name] === scheme);
+          if (theme) localStorage.setItem(key, theme);
+        } catch {}
+      }
+      const currentPalette = () => {
+        const theme = storedTheme();
+        const index = Math.max(
+          0,
+          palettes.findIndex((palette) => (theme ? palette.scheme === schemes[theme] : matchMedia(palette.media).matches)),
+        );
+        const { media, scheme, primary, accent } = palettes[index];
+        return { index, color: { media, scheme, primary, accent } };
+      };
+      const stored = (name) => (name === "__source" ? `__source ${repository}` : name);
+      __md_get = (name, ...options) => (name === "__palette" ? currentPalette() : materialGet(stored(name), ...options));
+      __md_set = (name, ...options) => {
+        if (name !== "__palette") materialSet(stored(name), ...options);
+      };
+      let following = false;
+      const follow = () => {
+        const { index, color } = currentPalette();
+        if (document.body.dataset.mdColorScheme === color.scheme) return;
+        following = true;
+        document.querySelectorAll('input[name="__palette"]')[index].click();
+        following = false;
+      };
+      document.addEventListener("change", (event) => {
+        if (event.target.name !== "__palette" || following) return;
+        try {
+          localStorage.setItem(key, event.target.dataset.mdColorScheme === "slate" ? "dark" : "light");
+        } catch {}
+      });
+      addEventListener("pageshow", follow);
+      addEventListener("storage", follow);
+      matchMedia("(prefers-color-scheme: dark)").addEventListener("change", follow);
+    })();
+  </script>
+{% endblock %}
+{% block tabs %}{% endblock %}

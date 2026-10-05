@@ -1,0 +1,18 @@
+target-version = "py312"
+src = ["src", "tests"]
+
+[lint]
+select = ["E", "W", "F", "I", "B", "UP", "SIM", "C4", "RUF", "PT", "ASYNC", "N", "T20", "ERA"]
+ignore = ["E501", "UP046", "UP047", "ASYNC109", "N818"]
+
+[lint.per-file-ignores]
+"examples/**" = ["T20"]
+
+[lint.flake8-bugbear]
+extend-immutable-calls = ["pydantic.Field"]
+
+[lint.isort]
+known-first-party = ["nodestep", "nodestep_sandbox"]
+
+[format]
+docstring-code-format = true

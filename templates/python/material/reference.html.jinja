@@ -1,0 +1,308 @@
+{%- macro annotation(value) -%}
+  {%- if value is string -%}
+    {{ value }}
+  {%- else -%}
+    {%- with expression = value -%}
+      {%- include "expression.html.jinja" with context -%}
+    {%- endwith -%}
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro markdown(text, heading_level, html_id, hook, inline=false) -%}
+  {{ text|convert_markdown(heading_level, html_id, strip_paragraph=inline, autoref_hook=hook) }}
+{%- endmacro -%}
+
+{%- macro entry_heading(obj, role, symbol, heading_level, html_id) -%}
+  {%- filter heading(
+      heading_level,
+      role=role,
+      id=html_id,
+      class="doc doc-heading ref-entry-heading",
+      toc_label=obj.name,
+      skip_inventory=config.skip_local_inventory,
+    ) -%}
+    <span class="doc doc-object-name doc-{{ role }}-name">{{ obj.name }}</span><code class="doc-symbol doc-symbol-heading doc-symbol-{{ symbol }}"></code>
+  {%- endfilter -%}
+{%- endmacro -%}
+
+{%- macro parameters(function) -%}
+  {%- set state = namespace(first=true, star=false) -%}
+  {%- for parameter in function.parameters if parameter.name not in ("self", "cls") and not parameter.name.startswith("_") -%}
+    {%- set kind = parameter.kind.value -%}
+    {%- if kind == "keyword-only" and not state.star -%}
+      {%- if not state.first %}, {% endif -%}
+      <span class="ref-param">*</span>
+      {%- set state.first = false -%}
+      {%- set state.star = true -%}
+    {%- endif -%}
+    {%- if not state.first %}, {% endif -%}
+    <span class="ref-param{{ " ref-param-long" if (parameter.name ~ "=" ~ parameter.default)|length > 40 }}">
+      {%- if kind == "variadic positional" -%}
+        *{%- set state.star = true -%}
+      {%- elif kind == "variadic keyword" -%}
+        **
+      {%- endif -%}
+      {{- parameter.name -}}
+      {%- if parameter.default is not none and kind not in ("variadic positional", "variadic keyword") -%}
+        ={{ parameter.default }}
+      {%- endif -%}
+    </span>
+    {%- set state.first = false -%}
+    {%- if kind == "positional-only" and (loop.last or loop.nextitem.kind.value != "positional-only") -%}
+      , <span class="ref-param">/</span>
+    {%- endif -%}
+  {%- endfor -%}
+{%- endmacro -%}
+
+{%- macro short_parameters(function) -%}
+  {%- set names = [] -%}
+  {%- set state = namespace(more=false) -%}
+  {%- for parameter in function.parameters if parameter.name not in ("self", "cls") and not parameter.name.startswith("_") -%}
+    {%- if parameter.kind.value in ("keyword-only", "variadic keyword") -%}
+      {%- set state.more = true -%}
+    {%- elif parameter.kind.value == "variadic positional" -%}
+      {%- set _ = names.append("*" ~ parameter.name) -%}
+    {%- else -%}
+      {%- set _ = names.append(parameter.name) -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if state.more -%}
+    {%- set _ = names.append("...") -%}
+  {%- endif -%}
+  {{- names|join(", ") -}}
+{%- endmacro -%}
+
+{%- macro prefix(function) -%}
+  {%- if "async" in function.labels -%}<span class="ref-signature-keyword">async </span>{%- endif -%}
+{%- endmacro -%}
+
+{%- macro signature_line(function, name, returns) -%}
+  <p class="ref-signature"><code>
+    {{- prefix(function) -}}
+    <span class="ref-signature-name">{{ name }}</span>({{ parameters(function) }})
+    {%- if returns and function.returns -%}
+      <span class="ref-signature-returns"> -&gt; {{ annotation(function.returns) }}</span>
+    {%- endif -%}
+    </code></p>
+{%- endmacro -%}
+
+{%- macro method_signature(function) -%}
+  <code>
+    {{- prefix(function) -}}
+    <span class="ref-signature-name">{{ function.name }}</span>({{ short_parameters(function) }})</code>
+{%- endmacro -%}
+
+{%- macro type_cell(value, span=false) -%}
+  <td class="ref-table-type"{% if span %} colspan="2"{% endif %}>{% if value %}<code>{{ annotation(value) }}</code>{% endif %}</td>
+{%- endmacro -%}
+
+{%- macro field_row(name, value, text) -%}
+  <tr>
+    <td class="ref-table-name"><code>{{ name }}</code></td>
+    {%- if text|trim -%}
+      {{ type_cell(value) }}
+      <td class="ref-table-text">{{ text }}</td>
+    {%- else -%}
+      {{ type_cell(value, true) }}
+    {%- endif -%}
+  </tr>
+{%- endmacro -%}
+
+{%- macro parameter_table(section, function, heading_level, html_id, hook) -%}
+  {%- set documented = {} -%}
+  {%- for item in section.value -%}
+    {%- set _ = documented.update({item.name.lstrip("*"): item}) -%}
+  {%- endfor -%}
+  {%- set shown = [] -%}
+  <table class="ref-table ref-table-fields">
+    <caption>Parameters</caption>
+    <tbody>
+      {%- for parameter in (function.parameters if function else []) if parameter.name not in ("self", "cls") and not parameter.name.startswith("_") -%}
+        {%- set item = documented.get(parameter.name) -%}
+        {%- set _ = shown.append(parameter.name) -%}
+        {{ field_row(
+            ("*" if parameter.kind.value == "variadic positional") ~ ("**" if parameter.kind.value == "variadic keyword") ~ parameter.name,
+            parameter.annotation or (item.annotation if item else none),
+            markdown(item.description, heading_level, html_id, hook) if item and item.description else "",
+          ) }}
+      {%- endfor -%}
+      {%- for name, item in documented.items() if name not in shown -%}
+        {{ field_row(item.name, item.annotation, markdown(item.description, heading_level, html_id, hook) if item.description else "") }}
+      {%- endfor -%}
+    </tbody>
+  </table>
+{%- endmacro -%}
+
+{%- macro result_types(value) -%}
+  {%- if value is not string and value.classname == "ExprTuple" -%}
+    {%- for element in value.elements -%}{{ annotation(element) }}{{ ", " if not loop.last }}{%- endfor -%}
+  {%- else -%}
+    {{ annotation(value) }}
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro result_table(section, title, heading_level, html_id, hook) -%}
+  <table class="ref-table ref-table-results">
+    <caption>{{ title }}</caption>
+    <tbody>
+      {%- for item in section.value -%}
+        <tr>
+          <td class="ref-table-type">{% if item.annotation %}<code>{{ result_types(item.annotation) }}</code>{% endif %}</td>
+          <td class="ref-table-text">{{ markdown(item.description, heading_level, html_id, hook) }}</td>
+        </tr>
+      {%- endfor -%}
+    </tbody>
+  </table>
+{%- endmacro -%}
+
+{%- macro docstring(obj, function, heading_level, html_id, hook, skip=(), after_summary="") -%}
+  {%- set state = namespace(summary=false) -%}
+  {%- set sections = obj.docstring.parsed if obj.docstring else [] -%}
+  {%- for section in sections -%}
+    {%- set kind = section.kind.value -%}
+    {%- if kind in skip -%}
+    {%- elif kind == "text" and not state.summary -%}
+      {%- set parts = section.value.strip().split("\n\n", 1) -%}
+      {%- if "summary" not in skip -%}
+        <p class="ref-summary">{{ markdown(parts[0], heading_level, html_id, hook, inline=true) }}</p>
+      {%- endif -%}
+      {{ after_summary }}
+      {%- if parts|length > 1 -%}
+        <div class="ref-description">{{ markdown(parts[1], heading_level, html_id, hook) }}</div>
+      {%- endif -%}
+      {%- set state.summary = true -%}
+    {%- elif kind == "text" -%}
+      <div class="ref-description">{{ markdown(section.value, heading_level, html_id, hook) }}</div>
+    {%- elif kind == "parameters" -%}
+      {{ parameter_table(section, function, heading_level, html_id, hook) }}
+    {%- elif kind in ("returns", "yields") -%}
+      {%- if section.value|selectattr("description")|list -%}
+        {{ result_table(section, "Returns" if kind == "returns" else "Yields", heading_level, html_id, hook) }}
+      {%- endif -%}
+    {%- elif kind == "raises" -%}
+      {{ result_table(section, "Raises", heading_level, html_id, hook) }}
+    {%- elif kind == "examples" -%}
+      <div class="ref-examples">
+        <p class="ref-section-title">Examples</p>
+        {%- for part_kind, part in section.value -%}
+          {%- if part_kind.value == "examples" -%}
+            {{ part|highlight(language="pycon", linenums=False) }}
+          {%- else -%}
+            {{ markdown(part, heading_level, html_id, hook) }}
+          {%- endif -%}
+        {%- endfor -%}
+      </div>
+    {%- else -%}
+      {%- with section = section, heading_level = heading_level, html_id = html_id, autoref_hook = hook -%}
+        {%- include "docstring/" ~ kind.replace(" ", "_") ~ ".html.jinja" with context -%}
+      {%- endwith -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- if not state.summary -%}
+    {{ after_summary }}
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro bases(cls) -%}
+  {%- set shown = [] -%}
+  {%- for base in cls.bases if base is not string and base.classname == "ExprName" and base.canonical_path != "nodestep.models.base.NodestepModel" and (base.canonical_path.startswith("nodestep.") or "." not in base.canonical_path) -%}
+    {%- set _ = shown.append(base) -%}
+  {%- endfor -%}
+  {%- if shown -%}
+    <p class="ref-bases">Subclass of
+      {%- for base in shown %} <code>{{ annotation(base) }}</code>{{ " and" if loop.revindex == 2 else "," if not loop.last }}{% endfor -%}
+    .</p>
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro attribute_table(cls, heading_level, html_id, hook) -%}
+  {%- set documented = {} -%}
+  {%- set sections = cls.docstring.parsed if cls.docstring else [] -%}
+  {%- for section in sections if section.kind.value == "attributes" -%}
+    {%- for item in section.value -%}
+      {%- set _ = documented.update({item.name: item}) -%}
+    {%- endfor -%}
+  {%- endfor -%}
+  {%- set has_parameters = sections|selectattr("kind.value", "equalto", "parameters")|list -%}
+  {%- set rows = [] -%}
+  {%- for attribute in cls.attributes|filter_objects(filters=config.filters, inherited_members=false, keep_no_docstrings=true)|order_members("source", none) -%}
+    {%- if attribute.name not in ("model_config",) and (attribute.name in documented or attribute.docstring or not has_parameters) -%}
+      {%- set _ = rows.append(attribute.name) -%}
+    {%- endif -%}
+  {%- endfor -%}
+  {%- for name in documented if name not in rows -%}
+    {%- set _ = rows.append(name) -%}
+  {%- endfor -%}
+  {%- if rows -%}
+    <table class="ref-table ref-table-fields">
+      <caption>Attributes</caption>
+      <tbody>
+        {%- for name in rows -%}
+          {%- set item = documented.get(name) -%}
+          {%- set attribute = cls.attributes.get(name) -%}
+          {%- if item and item.description -%}
+            {%- set text = markdown(item.description, heading_level, html_id, hook) -%}
+          {%- elif attribute and attribute.docstring -%}
+            {%- set text = markdown(attribute.docstring.value.strip().split("\n\n", 1)[0], heading_level, html_id, hook) -%}
+          {%- else -%}
+            {%- set text = "" -%}
+          {%- endif -%}
+          {{ field_row(name, (attribute.annotation if attribute else none) or (item.annotation if item else none), text) }}
+        {%- endfor -%}
+      </tbody>
+    </table>
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro method_label(method) -%}
+  {%- if "classmethod" in method.labels -%}<span class="ref-method-label">class method</span>
+  {%- elif "staticmethod" in method.labels -%}<span class="ref-method-label">static method</span>
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro method_list(cls, heading_level, html_id) -%}
+  {%- set methods = cls.functions|filter_objects(filters=config.filters, inherited_members=false, keep_no_docstrings=false)|order_members("source", none) -%}
+  {%- if methods -%}
+    <div class="ref-methods">
+      <p class="ref-methods-title">Methods</p>
+      {%- for method in methods -%}
+        {%- set method_id = html_id ~ "." ~ method.name -%}
+        {%- set hook = AutorefsHook(method, config) -%}
+        <details class="ref-method">
+          <summary>
+            {%- filter heading(
+                heading_level,
+                role="method",
+                id=method_id,
+                class="doc doc-heading ref-method-heading",
+                toc_label=method.name,
+                skip_inventory=config.skip_local_inventory,
+              ) -%}
+              {{ method_signature(method) }}
+            {%- endfilter -%}
+            {{ method_label(method) }}
+            <span class="ref-method-summary">{{ markdown(method.docstring.value.strip().split("\n\n", 1)[0], heading_level, method_id, hook, inline=true) }}</span>
+          </summary>
+          <div class="ref-method-body">
+            {{ signature_line(method, method.name, true) }}
+            {{ docstring(method, method, heading_level, method_id, hook, skip=("summary",)) }}
+          </div>
+        </details>
+      {%- endfor -%}
+    </div>
+  {%- endif -%}
+{%- endmacro -%}
+
+{%- macro alias_value(value) -%}
+  {%- if value is not string and value.classname == "ExprBinOp" and value.operator == "|" -%}
+    {{ alias_value(value.left) }} or {{ alias_value(value.right) }}
+  {%- elif value is not string and value.classname == "ExprSubscript" and value.left|string == "Literal" -%}
+    {%- set elements = value.slice.elements if value.slice.classname == "ExprTuple" else [value.slice] -%}
+    one of
+    {%- for element in elements %} <code>{{ (element|string).replace("'", '"') }}</code>{{ "," if not loop.last }}{% endfor -%}
+  {%- elif value is not string and value.classname == "ExprSubscript" and value.left|string == "Annotated" -%}
+    {{ alias_value(value.slice.elements[0]) }}
+  {%- else -%}
+    <code>{{ annotation(value) }}</code>
+  {%- endif -%}
+{%- endmacro -%}

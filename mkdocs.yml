@@ -1,0 +1,158 @@
+site_name: nodestep
+site_description: Explicit, async-first graph framework for LLM agents.
+site_url: https://nodestep-ai.github.io/nodestep/
+repo_url: https://github.com/nodestep-ai/nodestep
+repo_name: nodestep-ai/nodestep
+
+theme:
+  name: material
+  custom_dir: overrides
+  favicon: assets/favicon.svg
+  font: false
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: nodestep/moon
+        name: Switch to dark theme
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: nodestep/sun
+        name: Switch to light theme
+  features:
+    - content.code.copy
+    - navigation.footer
+    - navigation.sections
+    - navigation.tabs
+
+validation:
+  omitted_files: warn
+  unrecognized_links: warn
+  anchors: warn
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css
+
+extra:
+  brand: docs
+  generator: false
+
+hooks:
+  - overrides/hooks/autolink.py
+  - overrides/hooks/siblings.py
+  - overrides/hooks/headings.py
+  - overrides/hooks/reference.py
+
+watch:
+  - src
+
+plugins:
+  - search
+  - mkdocstrings:
+      custom_templates: templates
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: numpy
+            docstring_section_style: list
+            extensions:
+              - overrides/griffe/models.py
+            members_order: source
+            heading_level: 3
+            filters: ["!^_"]
+
+nav:
+  - nodestep:
+      - Get started:
+          - Overview: index.md
+          - Install: install.md
+          - Quickstart: quickstart.md
+      - Core concepts:
+          - Graphs and flow: concepts/graphs.md
+          - State: concepts/state.md
+          - Nodes and context: concepts/nodes.md
+          - Running: concepts/execution.md
+      - Capabilities:
+          - Streaming: concepts/streaming.md
+          - Persistence and time travel: concepts/persistence.md
+          - Interrupts: concepts/interrupts.md
+          - Agents and tools: concepts/agents.md
+          - Middleware: concepts/middleware.md
+          - Sub-agents: concepts/sub-agents.md
+          - Workspace and memory: concepts/workspace.md
+      - How-to:
+          - Branch on the state: guides/branching.md
+          - Fan out with Send: guides/fan-out.md
+          - Pause for approval: guides/approval.md
+          - Write a chat integration: guides/chat-models.md
+          - Test with ScriptedChat: guides/testing.md
+          - Trace with nodeartifact: guides/tracing.md
+          - Use the sandbox: guides/sandbox.md
+          - Run the examples: examples.md
+      - API reference:
+          - core:
+              - core: reference/core/index.md
+              - Graphs: reference/core/graphs.md
+              - Flow and branches: reference/core/flow.md
+              - Nodes and tools: reference/core/nodes.md
+              - Running and results: reference/core/running.md
+              - Reducers: reference/core/reducers.md
+              - Sub-agents: reference/core/sub-agents.md
+              - builtin_nodes: reference/core/builtin_nodes.md
+          - state:
+              - state: reference/state/index.md
+              - integrations:
+                  - filesystem: reference/state/integrations/filesystem.md
+                  - inmemory: reference/state/integrations/inmemory.md
+          - chat:
+              - chat: reference/chat/index.md
+              - integrations:
+                  - integrations: reference/chat/integrations/index.md
+                  - openai: reference/chat/integrations/openai.md
+          - middleware:
+              - middleware: reference/middleware/index.md
+              - interrupt: reference/middleware/interrupt.md
+              - memory: reference/middleware/memory.md
+              - skills: reference/middleware/skills.md
+              - summarization: reference/middleware/summarization.md
+              - todolist: reference/middleware/todolist.md
+              - tool_limit: reference/middleware/tool_limit.md
+          - workspace:
+              - workspace: reference/workspace/index.md
+              - integrations:
+                  - local: reference/workspace/integrations/local.md
+                  - virtual: reference/workspace/integrations/virtual.md
+          - exceptions: reference/exceptions.md
+          - Sandbox CLI: reference/sandbox-cli.md
+      - Changelog: changelog.md
+  - nodeartifact:
+      - Get started:
+          - Overview: nodeartifact/index.md
+      - Guides:
+          - Tracing: nodeartifact/tracing.md
+          - Web UI: nodeartifact/ui.md
+      - Reference:
+          - Server: nodeartifact/server.md

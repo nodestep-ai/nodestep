@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ run.id }}{% endblock %}
+{% block content %}
+<h1>Run <code>{{ run.id }}</code></h1>
+<dl class="nodestep-pairs">
+<dt>Thread</dt><dd><a href="/threads/{{ run.thread_id }}"><code>{{ run.thread_id }}</code></a></dd>
+<dt>Started</dt><dd>{{ run.started_at|clock }}</dd>
+{% if run.previous %}
+<dt>Resumes</dt><dd><a href="/runs/{{ run.previous }}"><code>{{ run.previous }}</code></a></dd>
+{% endif %}
+<dt>{{ "Answers" if run.kind == "resume" else "Input" }}</dt><dd><details class="nodestep-details"><summary>JSON</summary><div class="nodestep-code"><pre>{{ run.input_json }}</pre></div></details></dd>
+<dt>Stream modes</dt><dd><code>updates</code>, <code>custom</code>, <code>debug</code></dd>
+</dl>
+<h2>Events</h2>
+<p class="nodestep-lead">Rows appear as the graph yields events. Update rows link to the task's details.</p>
+<ol class="nodestep-list" aria-label="Events">
+{% for row in run.follow() %}
+{% include "_row.html" %}
+{% endfor %}
+</ol>
+{% include "_outcome.html" %}
+{% endblock %}

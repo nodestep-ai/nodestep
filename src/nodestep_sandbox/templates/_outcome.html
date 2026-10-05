@@ -1,0 +1,67 @@
+{% if run.status == "completed" %}
+<section class="nodestep-card nodestep-card-completed">
+<h2 class="nodestep-card-title">Completed</h2>
+<p>Final state:</p>
+<div class="nodestep-code"><pre>{{ run.final_state }}</pre></div>
+<p><a class="nodestep-button nodestep-button-secondary" href="/runs/new">Start another run</a></p>
+</section>
+{% elif run.status == "interrupted" %}
+{% set follow_up = next_run(run) %}
+<section class="nodestep-card nodestep-card-waiting">
+<h2 class="nodestep-card-title">Paused</h2>
+{% if follow_up %}
+<p>This pause was answered in run <a href="/runs/{{ follow_up.id }}"><code>{{ follow_up.id }}</code></a>.</p>
+{% else %}
+<p>The run waits for {{ run.pending|length }} {{ "answer" if run.pending|length == 1 else "answers" }}. They are sent together as <code>Resume(answers={...})</code>, keyed by interrupt key.</p>
+<form class="nodestep-stack" method="post" action="/runs/{{ run.id }}/resume">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+{% for item in run.pending %}
+{% set i = loop.index0 %}
+<fieldset class="nodestep-fieldset">
+<legend><code>{{ item.key }}</code></legend>
+<p class="nodestep-lead">Node <code>{{ item.node }}</code>, interrupt id <code>{{ item.id }}</code></p>
+{% if item.approval %}
+<p>Tool <code>{{ item.approval.tool_name }}</code> asks for approval{% if item.approval.tool_call_id %} (call <code>{{ item.approval.tool_call_id }}</code>){% endif %}.</p>
+{% set decision = values.get("decision." ~ i, "") %}
+<div class="nodestep-cluster">
+<label class="nodestep-check"><input type="radio" name="decision.{{ i }}" value="approve"{% if decision == "approve" %} checked{% endif %}> Approve</label>
+<label class="nodestep-check"><input type="radio" name="decision.{{ i }}" value="edit"{% if decision == "edit" %} checked{% endif %}> Edit the arguments</label>
+<label class="nodestep-check"><input type="radio" name="decision.{{ i }}" value="deny"{% if decision == "deny" %} checked{% endif %}> Deny</label>
+</div>
+<div class="nodestep-field">
+<label class="nodestep-label" for="arguments.{{ i }}">Arguments (a JSON object, used with edit: its keys replace those of the call, keys left out keep their values)</label>
+<textarea id="arguments.{{ i }}" name="arguments.{{ i }}" rows="5" class="nodestep-textarea nodestep-mono">{{ values.get("arguments." ~ i, item.approval.arguments_json) }}</textarea>
+</div>
+<div class="nodestep-field">
+<label class="nodestep-label" for="message.{{ i }}">Reason (optional, sent with deny)</label>
+<input type="text" id="message.{{ i }}" name="message.{{ i }}" value="{{ values.get('message.' ~ i, '') }}" class="nodestep-input">
+</div>
+{% else %}
+<details class="nodestep-details" open><summary>Payload</summary><div class="nodestep-code nodestep-code-wrap"><pre>{{ item.payload_json }}</pre></div></details>
+{% set kind = values.get("format." ~ i, "text") %}
+<div class="nodestep-field">
+<label class="nodestep-label" for="answer.{{ i }}">Answer</label>
+<textarea id="answer.{{ i }}" name="answer.{{ i }}" rows="3" class="nodestep-textarea">{{ values.get("answer." ~ i, "") }}</textarea>
+</div>
+<div class="nodestep-cluster">
+<label class="nodestep-check"><input type="radio" name="format.{{ i }}" value="text"{% if kind == "text" %} checked{% endif %}> Send as text</label>
+<label class="nodestep-check"><input type="radio" name="format.{{ i }}" value="json"{% if kind == "json" %} checked{% endif %}> Parse as JSON</label>
+</div>
+{% endif %}
+{% for control in ["answer." ~ i, "format." ~ i, "decision." ~ i, "arguments." ~ i] %}
+{% if control in errors %}<p class="nodestep-field-error">{{ errors[control] }}</p>{% endif %}
+{% endfor %}
+</fieldset>
+{% endfor %}
+<div><button class="nodestep-button nodestep-button-primary" type="submit">Resume</button></div>
+</form>
+{% endif %}
+<details class="nodestep-details"><summary>State at the pause</summary><div class="nodestep-code"><pre>{{ run.final_state }}</pre></div></details>
+</section>
+{% elif run.status == "error" %}
+<section class="nodestep-card nodestep-card-failed">
+<h2 class="nodestep-card-title">Failed</h2>
+<p class="nodestep-message nodestep-message-error">{{ run.error }}</p>
+{% if run.traceback %}<details class="nodestep-details"><summary>Traceback</summary><div class="nodestep-code"><pre>{{ run.traceback }}</pre></div></details>{% endif %}
+</section>
+{% endif %}

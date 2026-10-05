@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}New run{% endblock %}
+{% block content %}
+<h1>New run</h1>
+<p>Each run starts a new thread. The input is an update: it goes through the reducers on top of the state defaults, as in <code>graph.astream(input, thread_id=...)</code>.</p>
+{% set submitted = values.get("mode", "") %}
+{% if not form.untyped %}
+<form class="nodestep-card" method="post" action="/runs">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="mode" value="form">
+<h2 class="nodestep-card-title">State fields</h2>
+<p class="nodestep-lead">Empty fields are left out, so their defaults apply. A checkbox always sends true or false.</p>
+{% for field in form.fields %}
+{% set control = field.input_name %}
+{% set current = values.get(control, "") if submitted == "form" else field.initial %}
+{% set is_checked = (control in values) if submitted == "form" else field.checked %}
+{% set invalid = ' aria-invalid="true"' if control in errors else "" %}
+<div class="nodestep-field">
+{% if field.widget == "checkbox" %}
+<label class="nodestep-check"><input type="checkbox" id="{{ control }}" name="{{ control }}"{% if is_checked %} checked{% endif %}{{ invalid|safe }}> <code>{{ field.name }}</code></label>
+{% else %}
+<label class="nodestep-label" for="{{ control }}"><code>{{ field.name }}</code></label>
+{% if field.widget == "messages" %}
+<textarea id="{{ control }}" name="{{ control }}" rows="3" placeholder="Sent as one HumanMessage" class="nodestep-textarea"{{ invalid|safe }}>{{ current }}</textarea>
+{% elif field.widget == "json" %}
+<textarea id="{{ control }}" name="{{ control }}" rows="3" placeholder="JSON value" class="nodestep-textarea nodestep-mono"{{ invalid|safe }}>{{ current }}</textarea>
+{% elif field.widget == "select" %}
+<select id="{{ control }}" name="{{ control }}" class="nodestep-select"{{ invalid|safe }}>
+<option value=""{% if current == "" %} selected{% endif %}>(not set)</option>
+{% for label in field.options %}
+<option value="{{ loop.index0 }}"{% if current == loop.index0|string %} selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+{% elif field.widget == "integer" %}
+<input type="number" step="1" id="{{ control }}" name="{{ control }}" value="{{ current }}" class="nodestep-input"{{ invalid|safe }}>
+{% elif field.widget == "number" %}
+<input type="number" step="any" id="{{ control }}" name="{{ control }}" value="{{ current }}" class="nodestep-input"{{ invalid|safe }}>
+{% else %}
+<input type="text" id="{{ control }}" name="{{ control }}" value="{{ current }}" class="nodestep-input"{{ invalid|safe }}>
+{% endif %}
+{% endif %}
+<p class="nodestep-hint"><code>{{ field.type }}</code>, reducer <code>{{ field.reducer }}</code>, default <code>{{ field.default }}</code></p>
+{% if control in errors %}<p class="nodestep-field-error">{{ errors[control] }}</p>{% endif %}
+</div>
+{% endfor %}
+<div><button class="nodestep-button nodestep-button-primary" type="submit">Start run</button></div>
+</form>
+{% endif %}
+<form class="nodestep-card" method="post" action="/runs">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<input type="hidden" name="mode" value="json">
+<h2 class="nodestep-card-title">Raw JSON input</h2>
+<p class="nodestep-lead">A JSON object of state fields, passed to the graph as it is.{% if form.has_messages %} A message is an object with a <code>type</code>, for example <code>{"type": "human", "content": "Hello"}</code>.{% endif %}</p>
+<div class="nodestep-field">
+<label class="nodestep-label" for="raw">Input</label>
+<textarea id="raw" name="raw" rows="8" class="nodestep-textarea nodestep-mono"{% if "raw" in errors %} aria-invalid="true"{% endif %}>{{ values.get("raw", "{}") if submitted == "json" else "{}" }}</textarea>
+{% if "raw" in errors %}<p class="nodestep-field-error">{{ errors["raw"] }}</p>{% endif %}
+</div>
+<div><button class="nodestep-button nodestep-button-primary" type="submit">Start run</button></div>
+</form>
+{% endblock %}

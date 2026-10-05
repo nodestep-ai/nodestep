@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% import "_status.html" as status %}
+{% block title %}Threads{% endblock %}
+{% block content %}
+<h1>Threads</h1>
+<p>Threads started in this sandbox session, newest first.</p>
+{% if threads %}
+<section class="nodestep-card">
+<div class="nodestep-table-wrap">
+<table class="nodestep-table nodestep-table-stack">
+<thead><tr><th scope="col">Thread</th><th scope="col">Status</th><th scope="col">Runs</th><th scope="col">Started</th><th scope="col">Latest run</th></tr></thead>
+<tbody>
+{% for thread in threads %}
+<tr>
+<td data-label="Thread"><a href="/threads/{{ thread.id }}"><code>{{ thread.id }}</code></a></td>
+<td data-label="Status">{{ status.badge(thread.status) }}</td>
+<td data-label="Runs">{{ thread.runs }}</td>
+<td data-label="Started">{{ thread.started_at|clock }}</td>
+<td data-label="Latest run"><a href="/runs/{{ thread.latest_run }}"><code>{{ thread.latest_run }}</code></a></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+{% else %}
+<div class="nodestep-empty">
+<p class="nodestep-empty-title">No runs yet</p>
+<p>Runs you start in this session are listed here. <a href="/runs/new">Start one.</a></p>
+</div>
+{% endif %}
+{% endblock %}

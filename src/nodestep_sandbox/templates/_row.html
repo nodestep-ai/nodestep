@@ -1,0 +1,20 @@
+{% if row.kind == "debug" %}
+<li class="nodestep-list-row event-debug">
+<details class="nodestep-details"><summary><span class="nodestep-tag">{{ row.title }}</span>{% if row.node %} <code class="node">{{ row.node }}</code>{% endif %}{% if row.step is not none %} <span class="nodestep-hint">step {{ row.step }}</span>{% endif %} <span class="nodestep-hint">{{ row.summary }}</span></summary><div class="nodestep-code"><pre>{{ row.data }}</pre></div></details>
+</li>
+{% else %}
+<li class="nodestep-list-row event-{{ row.kind }}">
+<div class="nodestep-list-head">
+<span class="nodestep-tag">{{ row.title }}</span>
+{% if row.node %}<code class="node">{{ row.node }}</code>{% endif %}
+{% if row.step is not none %}<span class="nodestep-hint">step {{ row.step }}</span>{% endif %}
+{% if row.task is not none %}<a class="nodestep-list-meta" href="/runs/{{ run.id }}/steps/{{ row.task }}">Task details</a>{% endif %}
+</div>
+{% if row.kind == "update" %}
+{% if row.summary %}<p class="nodestep-lead">{{ row.summary }}</p>{% else %}<div class="nodestep-code"><pre>{{ row.data }}</pre></div>{% endif %}
+{% if row.state_after is not none %}<details class="nodestep-details"><summary>State after</summary><div class="nodestep-code"><pre>{{ row.state_after }}</pre></div></details>{% endif %}
+{% else %}
+<div class="nodestep-code"><pre>{{ row.data }}</pre></div>
+{% endif %}
+</li>
+{% endif %}

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+{% set page_title %}{% block title %}{% endblock %}{% endset %}
+<title>{% if page_title %}{{ page_title }} · {% endif %}nodestep sandbox</title>
+<link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+<script src="/static/nodestep-theme.js"></script>
+<link rel="stylesheet" href="/static/nodestep.css">
+<link rel="stylesheet" href="/static/sandbox.css">
+</head>
+<body>
+<a class="nodestep-skip-link" href="#content">Skip to content</a>
+<header class="nodestep-topbar">
+<a class="nodestep-brand" href="/"><svg class="nodestep-brand-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><path d="M14 50V14L50 50V14" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="14" cy="50" r="6" fill="currentColor"/><circle cx="14" cy="14" r="6" fill="currentColor"/><circle cx="50" cy="50" r="6" fill="currentColor"/><circle cx="50" cy="14" r="7" class="nodestep-mark-accent-fill"/></svg>nodestep sandbox</a>
+<nav class="nodestep-nav" aria-label="Pages">
+<a href="/"{% if section == "graph" %} aria-current="page"{% endif %}>Graph</a>
+<a href="/runs/new"{% if section == "new" %} aria-current="page"{% endif %}>New run</a>
+<a href="/threads"{% if section == "threads" %} aria-current="page"{% endif %}>Threads</a>
+</nav>
+<div class="nodestep-topbar-end">
+<button class="nodestep-theme-button" type="button" aria-label="Dark theme" aria-pressed="false"><svg class="nodestep-theme-moon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.14 2.06A6 6 0 1 0 13.94 8.87 5 5 0 0 1 7.14 2.06z"/></svg><svg class="nodestep-theme-sun" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"/></svg></button>
+</div>
+</header>
+<main class="nodestep-main nodestep-stack" id="content" tabindex="-1">
+<p class="nodestep-message nodestep-message-info">{{ store_note }}</p>
+{% block content %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,10 @@
+{%- import "reference.html.jinja" as reference with context -%}
+{%- with html_id = function.path, hook = AutorefsHook(function, config) -%}
+  <div class="doc doc-object doc-function ref-entry" data-ref-id="{{ html_id }}" data-ref-name="{{ function.name }}">
+    {{ reference.entry_heading(function, "function", "function", heading_level, html_id) }}
+    <div class="doc doc-contents ref-entry-body">
+      {{ reference.signature_line(function, function.name, true) }}
+      {{ reference.docstring(function, function, heading_level, html_id, hook) }}
+    </div>
+  </div>
+{%- endwith -%}

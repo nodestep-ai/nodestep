@@ -1,0 +1,20 @@
+{%- import "reference.html.jinja" as reference with context -%}
+{%- with html_id = attribute.path, hook = AutorefsHook(attribute, config) -%}
+  {%- set value = attribute.value -%}
+  {%- set alias = value is not none and value is not string and not attribute.annotation and value.classname in ("ExprBinOp", "ExprSubscript") -%}
+  {%- set type_variable = value is not none and value is not string and value.classname == "ExprCall" and value.function|string == "TypeVar" -%}
+  <div class="doc doc-object doc-attribute ref-entry" data-ref-id="{{ html_id }}" data-ref-name="{{ attribute.name }}">
+    {{ reference.entry_heading(attribute, "attribute", "type_alias" if alias else "type_variable" if type_variable else "constant", heading_level, html_id) }}
+    <div class="doc doc-contents ref-entry-body">
+      {%- if alias -%}
+        <p class="ref-signature ref-signature-alias"><span class="ref-signature-name">{{ attribute.name }}</span>: {{ reference.alias_value(attribute.value) }}</p>
+      {%- else -%}
+        <p class="ref-signature"><code><span class="ref-signature-name">{{ attribute.name }}</span>
+          {%- if attribute.annotation %}: {{ reference.annotation(attribute.annotation) }}{% endif -%}
+          {%- if attribute.value is not none %} = {{ reference.annotation(attribute.value) }}{% endif -%}
+        </code></p>
+      {%- endif -%}
+      {{ reference.docstring(attribute, none, heading_level, html_id, hook) }}
+    </div>
+  </div>
+{%- endwith -%}

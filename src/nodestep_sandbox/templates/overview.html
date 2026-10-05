@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Graph <code>{{ overview.name }}</code></h1>
+<section class="nodestep-card">
+<h2 class="nodestep-card-title">Diagram</h2>
+<pre class="mermaid nodestep-mermaid">{{ overview.mermaid }}</pre>
+<details class="nodestep-details">
+<summary>Mermaid source</summary>
+<p class="nodestep-lead">Mermaid draws the diagram above from cdn.jsdelivr.net. Without a network connection, paste this source into any Mermaid viewer.</p>
+<div class="nodestep-code"><pre><code>{{ overview.mermaid }}</code></pre></div>
+</details>
+</section>
+<section class="nodestep-card">
+<h2 class="nodestep-card-title">Nodes</h2>
+<p>The run starts at <code>{{ overview.start }}</code>. Solid arrows are edges and branches, dashed arrows are declared <code>goto</code> targets.</p>
+<div class="nodestep-table-wrap">
+<table class="nodestep-table nodestep-table-stack">
+<thead><tr><th scope="col">Node</th><th scope="col">Edge to</th><th scope="col">Branches</th><th scope="col">Goto targets</th></tr></thead>
+<tbody>
+{% for item in overview.nodes %}
+<tr>
+<td data-label="Node"><code>{{ item.name }}</code></td>
+<td data-label="Edge to">{% for target in item.edges %}<code>{{ target }}</code>{% else %}<span class="nodestep-hint">none</span>{% endfor %}</td>
+<td data-label="Branches">{% if item.branches %}<div>{% for text in item.branches %}<div><code>{{ text }}</code></div>{% endfor %}</div>{% else %}<span class="nodestep-hint">none</span>{% endif %}</td>
+<td data-label="Goto targets">{% for target in item.goto %}<code>{{ target }}</code>{% if not loop.last %}, {% endif %}{% else %}<span class="nodestep-hint">none</span>{% endfor %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+<section class="nodestep-card">
+<h2 class="nodestep-card-title">State</h2>
+{% if form.untyped %}
+<p>Untyped state (<code>dict</code>): any key, no reducers, JSON values only.</p>
+{% else %}
+<div class="nodestep-table-wrap">
+<table class="nodestep-table nodestep-table-stack">
+<thead><tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Reducer</th><th scope="col">Default</th></tr></thead>
+<tbody>
+{% for field in form.fields %}
+<tr><td data-label="Field"><code>{{ field.name }}</code></td><td data-label="Type"><code>{{ field.type }}</code></td><td data-label="Reducer"><code>{{ field.reducer }}</code></td><td data-label="Default"><code>{{ field.default }}</code></td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+</section>
+<p><a class="nodestep-button nodestep-button-primary" href="/runs/new">Start a run</a></p>
+{% endblock %}
+{% block scripts %}
+<script src="{{ mermaid_url }}" integrity="{{ mermaid_integrity }}" crossorigin="anonymous"></script>
+<script src="/static/diagram.js"></script>
+{% endblock %}

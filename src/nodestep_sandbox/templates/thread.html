@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% import "_status.html" as status %}
+{% block title %}{{ thread_id }}{% endblock %}
+{% block content %}
+<h1>Thread <code>{{ thread_id }}</code></h1>
+<section class="nodestep-card">
+<h2 class="nodestep-card-title">Runs</h2>
+<div class="nodestep-table-wrap">
+<table class="nodestep-table nodestep-table-stack">
+<thead><tr><th scope="col">Run</th><th scope="col">Kind</th><th scope="col">Status</th><th scope="col">Started</th></tr></thead>
+<tbody>
+{% for item in runs %}
+<tr>
+<td data-label="Run"><a href="/runs/{{ item.id }}"><code>{{ item.id }}</code></a></td>
+<td data-label="Kind">{{ item.kind }}</td>
+<td data-label="Status">{{ status.badge(item.status) }}</td>
+<td data-label="Started">{{ item.started_at|clock }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</section>
+<section class="nodestep-card">
+<h2 class="nodestep-card-title">History</h2>
+<p class="nodestep-lead">Stored events from <code>graph.history("{{ thread_id }}", state_store=...)</code>.</p>
+{% if history %}
+<div class="nodestep-table-wrap">
+<table class="nodestep-table history">
+<thead><tr><th scope="col">#</th><th scope="col">Event</th><th scope="col">Node</th><th scope="col" class="optional">Time</th><th scope="col">Data</th></tr></thead>
+<tbody>
+{% for event in history %}
+<tr>
+<td>{{ event.sequence }}</td>
+<td><code>{{ event.type }}</code></td>
+<td>{% if event.node %}<code>{{ event.node }}</code>{% endif %}</td>
+<td class="optional">{{ event.created_at|clock }}</td>
+<td>{% if event.error %}<p class="nodestep-field-error">{{ event.error }}</p>{% endif %}{% if event.data %}<details class="nodestep-details"><summary>JSON</summary><div class="nodestep-code"><pre>{{ event.data }}</pre></div></details>{% endif %}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="nodestep-lead">Nothing is stored for this thread yet.</p>
+{% endif %}
+</section>
+{% endblock %}

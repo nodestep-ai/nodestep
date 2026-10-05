@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ task.node }}{% endblock %}
+{% block content %}
+<nav aria-label="Breadcrumb">
+<ol class="nodestep-breadcrumbs">
+<li><a href="/runs/{{ run.id }}">Back to run <code>{{ run.id }}</code></a></li>
+<li aria-current="page">Task <code>{{ task.node }}</code></li>
+</ol>
+</nav>
+<h1>Task <code>{{ task.node }}</code>{% if task.step is not none %}, step {{ task.step }}{% endif %}</h1>
+<dl class="nodestep-pairs">
+<dt>Task id</dt><dd><code>{{ task.task_id }}</code></dd>
+<dt>Started</dt><dd>{{ task.started_at|clock or "not recorded in this run" }}</dd>
+<dt>Update recorded</dt><dd>{{ task.finished_at|clock or "not yet" }}</dd>
+<dt>Elapsed</dt><dd>{% if task.elapsed is not none %}{{ "%.3f"|format(task.elapsed) }} s, from the task's start to the end of its superstep{% else %}unknown{% endif %}</dd>
+</dl>
+<section class="nodestep-card full">
+<h2 class="nodestep-card-title">State before</h2>
+{% if task.state_before is not none %}<div class="nodestep-code"><pre>{{ task.state_before }}</pre></div>{% else %}<p class="nodestep-lead">Not recorded in this run: the task finished before the pause that this run resumes.</p>{% endif %}
+</section>
+<section class="nodestep-card full">
+<h2 class="nodestep-card-title">Update</h2>
+{% if task.update is not none %}<div class="nodestep-code"><pre>{{ task.update }}</pre></div>{% else %}<p class="nodestep-lead">No update yet.</p>{% endif %}
+</section>
+<section class="nodestep-card full">
+<h2 class="nodestep-card-title">State after</h2>
+{% if task.state_after is not none %}<div class="nodestep-code"><pre>{{ task.state_after }}</pre></div>{% else %}<p class="nodestep-lead">Not recorded.</p>{% endif %}
+</section>
+{% endblock %}

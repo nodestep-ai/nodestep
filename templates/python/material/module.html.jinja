@@ -1,0 +1,25 @@
+{%- import "reference.html.jinja" as reference with context -%}
+{%- with html_id = module.path, hook = AutorefsHook(module, config) -%}
+  <div class="doc doc-object doc-module">
+    {%- filter heading(
+        1,
+        role="module",
+        id=html_id,
+        class="doc doc-heading",
+        toc_label=module.path,
+        skip_inventory=config.skip_local_inventory,
+      ) -%}
+      <span class="doc doc-object-name doc-module-name">{{ module.path }}</span>
+    {%- endfilter -%}
+    <div class="doc doc-contents first ref-intro">
+      {%- for section in (module.docstring.parsed if module.docstring else []) if section.kind.value == "text" -%}
+        {{ reference.markdown(section.value, 1, html_id, hook) }}
+      {%- endfor -%}
+      {%- if config.members is not sameas false -%}
+        {%- with obj = module, heading_level = 2, root = false, root_members = true -%}
+          {%- include "children.html.jinja" with context -%}
+        {%- endwith -%}
+      {%- endif -%}
+    </div>
+  </div>
+{%- endwith -%}

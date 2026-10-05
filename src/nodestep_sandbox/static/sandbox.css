@@ -1,0 +1,18 @@
+.history .nodestep-code pre { max-height: 18rem; }
+.full .nodestep-code pre { max-height: none; }
+.event-update .nodestep-tag { color: var(--nodestep-color-accent-text); }
+.event-debug { padding-block: var(--nodestep-space-1); }
+@media (max-width: 40rem) {
+  .optional { display: none; }
+  .nodestep-table.history, .nodestep-table.history tbody { display: block; }
+  .nodestep-table.history thead { display: none; }
+  .nodestep-table.history tr {
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr) auto;
+    gap: 0 var(--nodestep-space-2);
+    padding: var(--nodestep-space-2) var(--nodestep-space-3);
+    border-bottom: var(--nodestep-border);
+  }
+  .nodestep-table.history td { padding: 0; border: 0; }
+  .nodestep-table.history td:last-child { grid-column: 2 / -1; }
+}
